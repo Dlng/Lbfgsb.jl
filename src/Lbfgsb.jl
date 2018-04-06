@@ -1,6 +1,6 @@
 module Lbfgsb
 
-export  lbfgsb
+export lbfgsb
 
 if isfile(joinpath(dirname(@__FILE__),"..","deps","deps.jl"))
     include("../deps/deps.jl")
@@ -97,7 +97,6 @@ function lbfgsb(ogFunc!::Function,
     end
 
     function callLBFGS(cmd)
-        task = zeros(60)
         if length(cmd) != 0
             @simd for i = 1:length(cmd)
                 task[i] = (cmd)[i];
