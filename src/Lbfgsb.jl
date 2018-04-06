@@ -1,5 +1,7 @@
 module Lbfgsb
 
+export  lbfgsb
+
 if isfile(joinpath(dirname(@__FILE__),"..","deps","deps.jl"))
     include("../deps/deps.jl")
 else
@@ -7,55 +9,6 @@ else
 end
 
 # package code goes here
-function callLBFGS(cmd)
-    if length(cmd) != 0
-        @simd for i = 1:length(cmd)
-            task[i] = (cmd)[i];
-        end
-        @simd for i = length(cmd)+1:60
-            task[i] = ' ';
-        end
-    end
-
-    ccall((:setulb_, liblbfgsbf),
-          Void,
-          (Ptr{Int32},
-           Ptr{Int32},
-           Ptr{Float64},
-           Ptr{Float64},
-           Ptr{Float64},
-           Ptr{Int32},
-           Ptr{Float64},
-           Ptr{Float64},
-           Ptr{Float64},
-           Ptr{Float64},
-           Ptr{Float64},
-           Ptr{Int32},
-           Ptr{UInt8},
-           Ptr{Int32},
-           Ptr{UInt8},
-           Ptr{Bool},
-           Ptr{Int32},
-           Ptr{Float64} ),
-          n,
-          m,
-          x,
-          lb,
-          ub,
-          btype,
-          f,
-          g,
-          factr,
-          pgtol,
-          wa,
-          iwa,
-          task,
-          iprint,
-          csave,
-          lsave,
-          isave,
-          dsave );
-end
 
 
 function lbfgsb(ogFunc!::Function,
@@ -125,9 +78,11 @@ function lbfgsb(ogFunc!::Function,
             t += 1;
             if t >= maxiter # exceed maximum number of iteration
                 # @callLBFGS "STOP"
-                @callLBFGS("STOP")
+
+		callLBFGS("STOP")
                 break;
             end
+
         elseif task[1] == UInt32('C') # convergence
             break;
         elseif task[1] == UInt32('A')
@@ -140,6 +95,58 @@ function lbfgsb(ogFunc!::Function,
 
         callLBFGS("")
     end
+
+    function callLBFGS(cmd)
+        task = zeros(60)
+        if length(cmd) != 0
+            @simd for i = 1:length(cmd)
+                task[i] = (cmd)[i];
+            end
+            @simd for i = length(cmd)+1:60
+                task[i] = ' ';
+            end
+        end
+
+        ccall((:setulb_, liblbfgsbf),
+              Void,
+              (Ptr{Int32},
+               Ptr{Int32},
+               Ptr{Float64},
+               Ptr{Float64},
+               Ptr{Float64},
+               Ptr{Int32},
+               Ptr{Float64},
+               Ptr{Float64},
+               Ptr{Float64},
+               Ptr{Float64},
+               Ptr{Float64},
+               Ptr{Int32},
+               Ptr{UInt8},
+               Ptr{Int32},
+               Ptr{UInt8},
+               Ptr{Bool},
+               Ptr{Int32},
+               Ptr{Float64} ),
+              n,
+              m,
+              x,
+              lb,
+              ub,
+              btype,
+              f,
+              g,
+              factr,
+              pgtol,
+              wa,
+              iwa,
+              task,
+              iprint,
+              csave,
+              lsave,
+              isave,
+              dsave );
+    end
+
 
     return (f[1], x, t, c, status)
 
@@ -181,6 +188,6 @@ end # function lbfgsb
 
 
 
-export lbfgsb
+
 
 end # module
